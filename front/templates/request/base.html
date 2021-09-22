@@ -1,0 +1,10 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="w3-main">
+{% include "request/include/header.html" %}
+    {% block contentacc %}
+    {% endblock contentacc %}
+</div>
+{% include "request/include/footer.html" %}
+{% endblock content %}

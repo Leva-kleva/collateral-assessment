@@ -1,0 +1,129 @@
+{% extends "request/base.html" %}
+
+{% block contentacc %}
+<div id="request" class="w3-center">
+    <p></p>
+    <div class="w3-center">
+        <h4>Введите исходные данные:</h4>
+    </div>
+
+    <div class="w3-card w3-container" style="margin: 15%; margin-top: 0%">
+        <form>
+            <div class="w3-section" style="text-align: left;">
+                <label>Выберите объект:</label>
+                <select class="w3-input change" id="object" name="object">
+                    <option></option>
+                    <option value="flat">Недвижимость</option>
+                    <option value="car">Автомобиль</option>
+                </select>
+            </div>
+            <div class="w3-section" style="text-align: left;">
+                <h7 class="response_data"></h7>
+            </div>
+            <button class="w3-btn w3-blue w3-black" id="btn_request" type="button">
+                Рассчитать
+            </button>
+            <div class="w3-section response_request" style="text-align: left;">
+            </div>
+            <div class="w3-margin-top"></div>
+        </form>
+    </div>
+</div>
+<br>
+
+<script>
+$(function() {
+    $("body").on('click', '.change', function() {
+        var body = {
+            "object": $('#object').val(),
+        };
+        $(".change").each(function(index, val) {
+            console.log($(val).val());
+            var id = $(val).attr("id");
+            body[id] = $(val).val();
+            console.log(id);
+        });
+        $.ajax({
+            url: '/api/v1/get_params',
+            headers: {
+                "Content-Type": "application/json"
+            },
+            data: JSON.stringify(body),
+            type: 'POST',
+            success: function(json_date) {
+                console.log(json_date);
+                $.each(json_date, function(key, value) {
+                    if (key != 'translate'){
+                    var value = json_date[key];
+                    console.log(value);
+                    if (value == 0){
+                        $('.response_data').append('<label>Введите ' + json_date['translate'][key] + '</label><input class="w3-input change" type="number" id=' + key + '>');
+                    }
+                    else {
+                        var ans = '<label>Выберите ' + json_date['translate'][key] + ':</label> <select class="w3-input change" id="' + key + '" name="' + key + '"> <option></option>'
+                        $.each(value, function(index, val) {
+                            if (json_date['translate'][val] == undefined){
+                            ans += '<option value="' + val + '">' + val + '</option>';
+                            }
+                            else {
+                            ans += '<option value="' + val + '">' + json_date['translate'][val] + '</option>';
+                            }
+                        })
+                        $('.response_data').append(ans + '</select><p></p>');
+                        $('#object').prop("disabled", true);
+                    }
+                    }
+                })
+            },
+            error: function(error) {
+                console.log(error);
+            }
+        });
+    });
+});
+</script>
+
+<script>
+$(function() {
+    $('#btn_request').click(function() {
+        var body = {
+            "object": $('#object').val(),
+        };
+        $(".change").each(function(index, val) {
+            console.log($(val).val());
+            var id = $(val).attr("id");
+            body[id] = [$(val).val()];
+            console.log(id);
+        });
+        $.ajax({
+            url: '/api/v1/request',
+            headers: {
+                "Content-Type": "application/json"
+            },
+            data: JSON.stringify(body),
+            type: 'POST',
+            success: function(json_date) {
+                console.log(json_date);
+                $(".response_request").html("<p>Оценка: " + json_date.cost + " руб; Класс экологичности: "+ json_date.eco +" </p>");
+            },
+            error: function(error) {
+                var msg = '';
+                if (error.status == 400) {
+                    msg = 'Ошибка. Проверьте введенные данные';
+                } else if (error.status == 500) {
+                    msg = 'Ошибка сервера. Попробуйте позже.';
+                } else if (error.status == 403) {
+                    msg = 'Нет доступа.';
+                } else {
+                    msg = 'Ошибка.';
+                }
+                console.log(msg);
+                $(".response_request").html("<p style='color: red;'>" + msg + "</p>");
+            }
+        });
+    });
+});
+</script>
+
+
+{% endblock contentacc %}
